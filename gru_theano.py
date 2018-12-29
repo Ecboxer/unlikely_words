@@ -44,9 +44,6 @@ class GRUTheano:
         y = T.ivector('y')
         
         def forward_prop_step(x_t, s_t1_prev, s_t2_prev):
-            # This is how we calculated the hidden state in a simple RNN. No longer!
-            # s_t = T.tanh(U[:,x_t] + W.dot(s_t1_prev))
-            
             # Word embedding layer
             x_e = E[:,x_t]
             
