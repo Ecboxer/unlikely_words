@@ -14,6 +14,105 @@ SENTENCE_START_TOKEN = "SENTENCE_START"
 SENTENCE_END_TOKEN = "SENTENCE_END"
 UNKNOWN_TOKEN = "UNKNOWN_TOKEN"
 
+def load_Gutenberg(path):
+    """Load specified file with formatting from Gutenberg"""
+    text = []
+    f = open(path, 'r')
+    #Read corpus into text as a list of lines
+    ast_count = 0
+    for line in f.readlines():
+        if ast_count == 0: #Gutenberg preamble
+            if line[0] == '*':
+                ast_count += 1
+        elif ast_count == 1: #Book text
+            if line[0] == '*': #Gutenberg post
+                ast_count += 1
+            else:
+                text.append(line)
+    f.close()
+
+    #Form corpus by joining list of lines
+    corpus = ''.join(text)
+
+    #Remove line breaks and returns
+    corpus = corpus.replace('\n', ' ')
+    corpus = corpus.replace('\r', '')
+    corpus = corpus.replace('\\', '')
+
+    #Remove multiple whitespace
+    corpus = ' '.join(corpus.split())
+    
+    print 'Loaded text from %s' % path
+    
+    return corpus
+
+def preprocessing(corpus, sentence_start_token=SENTENCE_START_TOKEN, sentence_end_token=SENTENCE_END_TOKEN):
+    """Perform preprocessin on the corpus, up until word frequency
+    Return tokenized sentences, sentences and an nltk FreqDist object"""
+    #Split corpus into sentences
+    sentences = nltk.sent_tokenize(corpus.decode('utf-8').lower())
+
+    #Append sentence start and end tokens
+    sentences = ['%s %s %s' % (sentence_start_token, x, sentence_end_token) for x in sentences]
+    print 'Parsed %d sentences' % len(sentences)
+
+    #Tokenize the sentences into words
+    tokenized_sentences = [nltk.word_tokenize(sent) for sent in sentences]
+
+    #Count word frequency
+    word_freq = nltk.FreqDist(itertools.chain(*tokenized_sentences))
+    print 'Found %d unique word tokens' % len(word_freq.items())
+
+    return tokenized_sentences, sentences, word_freq
+
+def construct_idxs(freqdist, vocabulary_size, unknown_token=UNKNOWN_TOKEN):
+    """Get the vocabulary_size^{th} most common words and build vocabulary, idx2word and word2idx"""
+    vocab = freqdist.most_common(vocabulary_size-1)
+    idx2word = [x[0] for x in vocab]
+    idx2word.append(unknown_token)
+    word2idx = dict([(w,i) for i,w in enumerate(idx2word)])
+    print 'Using vocabulary size %d' % vocabulary_size
+    print 'The least frequent word in our vocabulary is "%s" appearing %d times' % (vocab[-1][0], vocab[-1][1])
+
+    return vocab, idx2word, word2idx
+
+def replace_unknown(tokenized_sentences, sentences, word2idx, unknown_token=UNKNOWN_TOKEN):
+    """Replace all words not in our vocabulary with the unknown token and return fully tokenized sentences"""
+    for i,sent in enumerate(tokenized_sentences):
+        tokenized_sentences[i] = [w if w in word2idx else unknown_token for w in sent]
+        temp = np.random.randint(0, len(sentences))
+
+    print 'Example sentence: "%s"\nExample sentence after pre-processing: "%s"' % (sentences[temp], tokenized_sentences[temp])
+
+    return tokenized_sentences
+
+def create_training_data(tokenized_sentences, sentences, word2idx, idx2word):
+    """Return features and labels for RNN"""
+    X_train = np.asarray([[word2idx[w] for w in sent[:-1]] for sent in tokenized_sentences])
+    y_train = np.asarray([[word2idx[w] for w in sent[1:]] for sent in tokenized_sentences])
+
+    #Training data example
+    temp = np.random.randint(0, len(sentences))
+    X_example, y_example = X_train[temp], y_train[temp]
+    print 'X:\n%s\n%s' % (' '.join([idx2word[x] for x in X_example]), X_example)
+    print 'y:\n%s\n%s' % (' '.join([idx2word[x] for x in y_example]), y_example)
+
+    return X_train, y_train
+
+def preprocessing_pipeline(path, vocab_size=0):
+    """Runs the entire preprocessing pipeline
+    Returns corpus, tokenized_sentences, sentences, word_freq, vocab, id2word, word2idx, X_train, y_train"""
+    corpus = load_Gutenberg(path)
+    tokenized_sentences, sentences, word_freq = preprocessing(corpus)
+    
+    if vocab_size == 0: #Make a guess of two-thirds vocabulary size
+        vocab_size = int(2*word_freq.B() / 3)
+    vocab, idx2word, word2idx = construct_idxs(word_freq, vocab_size)
+    tokenized_sentences = replace_unknown(tokenized_sentences, sentences, word2idx)
+    X_train, y_train = create_training_data(tokenized_sentences, sentences, word2idx, idx2word)
+
+    return corpus, tokenized_sentences, sentences, word_freq, vocab, idx2word, word2idx, X_train, y_train
+
 def softmax(x):
     xt = np.exp(x - np.max(x))
     return xt / np.sum(xt)
@@ -131,7 +230,7 @@ def generate_sentence(model, index_to_word, word_to_index, min_length=5):
         samples = np.random.multinomial(1, next_word_probs)
         sampled_word = np.argmax(samples)
         new_sentence.append(sampled_word)
-        # Seomtimes we get stuck if the sentence becomes too long, e.g. "........" :(
+        # Sometimes we get stuck if the sentence becomes too long, e.g. "........" :(
         # And: We don't want sentences with UNKNOWN_TOKEN's
         if len(new_sentence) > 100 or sampled_word == word_to_index[UNKNOWN_TOKEN]:
             return None
@@ -146,3 +245,22 @@ def generate_sentences(model, n, index_to_word, word_to_index):
             sent = generate_sentence(model, index_to_word, word_to_index)
         print_sentence(sent, index_to_word)
 
+def unlikely_words(model, index_to_word, word_to_index, X, delta_min=.5, sentence_start_token=SENTENCE_START_TOKEN, verbose=False):
+    """Return those words from y that were least likely to appear according to the model"""
+    X_pred_probs = [model.predict(sent) for sent in X]
+    X_pred = [[word_to_index[sentence_start_token]] + [j.argmax() for j in X_pred_probs[i]][:-1] for i in range(len(X_pred_probs))]
+    prob_diff = [np.asarray([X_pred_probs[i][j].max() - X_pred_probs[i][j][X[i][j]] for j in range(len(X_pred_probs[i])-1)]) for i in range(len(X_pred_probs))]
+    #Only those probabilities meeting the condition sent_diff > delta_min
+    prob_diff_exc = [(sent_diff > delta_min) * sent_diff for sent_diff in prob_diff]
+    #Sum of prob_diff_exc to check that at least one word meets the condition
+    prob_diff_sum = [prob_diff_exc[i].sum() for i in range(len(prob_diff_exc))]
+    #Indices of the greatest deviation between actual and predicted, greater than delta_min
+    ind_exc = [prob_diff_exc[i].argmax() if prob_diff_sum[i] != 0. else 0. for i in range(len(prob_diff_sum))]
+    
+    if verbose == True:
+        for i in range(len(X_pred)):
+            if not ind_exc[i] == 0:
+                print_sentence(X[i], index_to_word)
+                print 'Predicted word: %s' % index_to_word[X_pred[i][ind_exc[i]]]
+                print 'Actual word: %s' % index_to_word[X[i][ind_exc[i]]]
+    return ind_exc
