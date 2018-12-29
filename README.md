@@ -1,1 +1,2 @@
-### Implementing an RNN
+### Implementing an RNN and training on various books
+
