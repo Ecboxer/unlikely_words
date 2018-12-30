@@ -14,22 +14,40 @@ SENTENCE_START_TOKEN = "SENTENCE_START"
 SENTENCE_END_TOKEN = "SENTENCE_END"
 UNKNOWN_TOKEN = "UNKNOWN_TOKEN"
 
-def load_Gutenberg(path):
+def load_Gutenberg(paths):
     """Load specified file with formatting from Gutenberg"""
     text = []
-    f = open(path, 'r')
-    #Read corpus into text as a list of lines
-    ast_count = 0
-    for line in f.readlines():
-        if ast_count == 0: #Gutenberg preamble
-            if line[0] == '*':
-                ast_count += 1
-        elif ast_count == 1: #Book text
-            if line[0] == '*': #Gutenberg post
-                ast_count += 1
-            else:
-                text.append(line)
-    f.close()
+    if type(paths) == str:
+        f = open(paths, 'r')
+        #Read corpus into text as a list of lines
+        ast_count = 0
+        for line in f.readlines():
+            if ast_count == 0: #Gutenberg preamble
+                if line[0] == '*':
+                    ast_count += 1
+            elif ast_count == 1: #Book text
+                if line[0] == '*': #Gutenberg post
+                    ast_count += 1
+                else:
+                    text.append(line)
+        print 'Read text from %s' % paths
+        f.close()
+    if type(paths) == list:
+        for path in paths:
+            f = open(path, 'r')
+            #Read corpus into text as a list of lines
+            ast_count = 0
+            for line in f.readlines():
+                if ast_count == 0: #Gutenberg preamble
+                    if line[0] == '*':
+                        ast_count += 1
+                elif ast_count == 1: #Book text
+                    if line[0] == '*': #Gutenberg post
+                        ast_count += 1
+                    else:
+                        text.append(line)
+            print 'Read text from %s' % path
+            f.close()
 
     #Form corpus by joining list of lines
     corpus = ''.join(text)
@@ -41,8 +59,6 @@ def load_Gutenberg(path):
 
     #Remove multiple whitespace
     corpus = ' '.join(corpus.split())
-    
-    print 'Loaded text from %s' % path
     
     return corpus
 
