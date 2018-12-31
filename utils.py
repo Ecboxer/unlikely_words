@@ -7,6 +7,8 @@ import sys
 import operator
 import io
 import array
+import random
+import os
 from datetime import datetime
 from gru_theano import GRUTheano
 
@@ -30,7 +32,7 @@ def load_Gutenberg(paths):
                     ast_count += 1
                 else:
                     text.append(line)
-        print 'Read text from %s' % paths
+        print('Read text from %s' % paths)
         f.close()
     if type(paths) == list:
         for path in paths:
@@ -46,7 +48,7 @@ def load_Gutenberg(paths):
                         ast_count += 1
                     else:
                         text.append(line)
-            print 'Read text from %s' % path
+            print('Read text from %s' % path)
             f.close()
 
     #Form corpus by joining list of lines
@@ -70,14 +72,14 @@ def preprocessing(corpus, sentence_start_token=SENTENCE_START_TOKEN, sentence_en
 
     #Append sentence start and end tokens
     sentences = ['%s %s %s' % (sentence_start_token, x, sentence_end_token) for x in sentences]
-    print 'Parsed %d sentences' % len(sentences)
+    print('Parsed %d sentences' % len(sentences))
 
     #Tokenize the sentences into words
     tokenized_sentences = [nltk.word_tokenize(sent) for sent in sentences]
 
     #Count word frequency
     word_freq = nltk.FreqDist(itertools.chain(*tokenized_sentences))
-    print 'Found %d unique word tokens' % len(word_freq.items())
+    print('Found %d unique word tokens' % len(word_freq.items()))
 
     return tokenized_sentences, sentences, word_freq
 
@@ -87,8 +89,8 @@ def construct_idxs(freqdist, vocabulary_size, unknown_token=UNKNOWN_TOKEN):
     idx2word = [x[0] for x in vocab]
     idx2word.append(unknown_token)
     word2idx = dict([(w,i) for i,w in enumerate(idx2word)])
-    print 'Using vocabulary size %d' % vocabulary_size
-    print 'The least frequent word in our vocabulary is "%s" appearing %d times' % (vocab[-1][0], vocab[-1][1])
+    print('Using vocabulary size %d' % vocabulary_size)
+    print('The least frequent word in our vocabulary is "%s" appearing %d times' % (vocab[-1][0], vocab[-1][1]))
 
     return vocab, idx2word, word2idx
 
@@ -98,7 +100,7 @@ def replace_unknown(tokenized_sentences, sentences, word2idx, unknown_token=UNKN
         tokenized_sentences[i] = [w if w in word2idx else unknown_token for w in sent]
         temp = np.random.randint(0, len(sentences))
 
-    print 'Example sentence: "%s"\nExample sentence after pre-processing: "%s"' % (sentences[temp], tokenized_sentences[temp])
+    print('Example sentence: "%s"\nExample sentence after pre-processing: "%s"' % (sentences[temp], tokenized_sentences[temp]))
 
     return tokenized_sentences
 
@@ -110,8 +112,8 @@ def create_training_data(tokenized_sentences, sentences, word2idx, idx2word):
     #Training data example
     temp = np.random.randint(0, len(sentences))
     X_example, y_example = X_train[temp], y_train[temp]
-    print 'X:\n%s\n%s' % (' '.join([idx2word[x] for x in X_example]), X_example)
-    print 'y:\n%s\n%s' % (' '.join([idx2word[x] for x in y_example]), y_example)
+    print('X:\n%s\n%s' % (' '.join([idx2word[x] for x in X_example]), X_example))
+    print('y:\n%s\n%s' % (' '.join([idx2word[x] for x in y_example]), y_example))
 
     return X_train, y_train
 
@@ -150,7 +152,7 @@ def train_with_sgd(model, X_train, y_train, learning_rate=0.001, nepoch=20, deca
 def save_model_parameters_theano(outfile, model):
     U, V, W = model.U.get_value(), model.V.get_value(), model.W.get_value()
     np.savez(outfile, U=U, V=V, W=W)
-    print "Saved model parameters to %s." % outfile
+    print("Saved model parameters to %s." % outfile)
    
 def load_model_parameters_theano(path, model):
     npzfile = np.load(path)
@@ -160,7 +162,7 @@ def load_model_parameters_theano(path, model):
     model.U.set_value(U)
     model.V.set_value(V)
     model.W.set_value(W)
-    print "Loaded model parameters from %s. hidden_dim=%d word_dim=%d" % (path, U.shape[0], U.shape[1])
+    print("Loaded model parameters from %s. hidden_dim=%d word_dim=%d" % (path, U.shape[0], U.shape[1]))
 
 def save_model_parameters_theano_gru(model, outfile):
     np.savez(outfile,
@@ -170,13 +172,13 @@ def save_model_parameters_theano_gru(model, outfile):
         V=model.V.get_value(),
         b=model.b.get_value(),
         c=model.c.get_value())
-    print "Saved model parameters to %s." % outfile
+    print("Saved model parameters to %s." % outfile)
 
 def load_model_parameters_theano_gru(path, modelClass=GRUTheano):
     npzfile = np.load(path)
     E, U, W, V, b, c = npzfile["E"], npzfile["U"], npzfile["W"], npzfile["V"], npzfile["b"], npzfile["c"]
     hidden_dim, word_dim = E.shape[0], E.shape[1]
-    print "Building model model from %s with hidden_dim=%d word_dim=%d" % (path, hidden_dim, word_dim)
+    print("Building model model from %s with hidden_dim=%d word_dim=%d" % (path, hidden_dim, word_dim))
     sys.stdout.flush()
     model = modelClass(word_dim, hidden_dim=hidden_dim)
     model.E.set_value(E)
@@ -199,7 +201,7 @@ def gradient_check_theano(model, x, y, h=0.001, error_threshold=0.01):
         # Get the actual parameter value from the mode, e.g. model.W
         parameter_T = operator.attrgetter(pname)(model)
         parameter = parameter_T.get_value()
-        print "Performing gradient check for parameter %s with size %d." % (pname, np.prod(parameter.shape))
+        print("Performing gradient check for parameter %s with size %d." % (pname, np.prod(parameter.shape)))
         # Iterate over each element of the parameter matrix, e.g. (0,0), (0,1), ...
         it = np.nditer(parameter, flags=['multi_index'], op_flags=['readwrite'])
         while not it.finished:
@@ -222,15 +224,15 @@ def gradient_check_theano(model, x, y, h=0.001, error_threshold=0.01):
             relative_error = np.abs(backprop_gradient - estimated_gradient)/(np.abs(backprop_gradient) + np.abs(estimated_gradient))
             # If the error is to large fail the gradient check
             if relative_error > error_threshold:
-                print "Gradient Check ERROR: parameter=%s ix=%s" % (pname, ix)
-                print "+h Loss: %f" % gradplus
-                print "-h Loss: %f" % gradminus
-                print "Estimated_gradient: %f" % estimated_gradient
-                print "Backpropagation gradient: %f" % backprop_gradient
-                print "Relative Error: %f" % relative_error
+                print("Gradient Check ERROR: parameter=%s ix=%s" % (pname, ix))
+                print("+h Loss: %f" % gradplus)
+                print("-h Loss: %f" % gradminus)
+                print("Estimated_gradient: %f" % estimated_gradient)
+                print("Backpropagation gradient: %f" % backprop_gradient)
+                print("Relative Error: %f" % relative_error)
                 return 
             it.iternext()
-        print "Gradient check for parameter %s passed." % (pname)
+        print("Gradient check for parameter %s passed." % (pname))
 
 def print_sentence(s, index_to_word):
     sentence_str = [index_to_word[x] for x in s[1:-1]]
@@ -277,6 +279,34 @@ def unlikely_words(model, index_to_word, word_to_index, X, delta_min=.5, sentenc
         for i in range(len(X_pred)):
             if not ind_exc[i] == 0:
                 print_sentence(X[i], index_to_word)
-                print 'Predicted word: %s' % index_to_word[X_pred[i][ind_exc[i]]]
-                print 'Actual word: %s' % index_to_word[X[i][ind_exc[i]]]
+                print('Predicted word: %s' % index_to_word[X_pred[i][ind_exc[i]]])
+                print('Actual word: %s' % index_to_word[X[i][ind_exc[i]]])
     return ind_exc
+
+def split_file(file, percent_train=0.64, percent_valid=0.16, isShuffle=True, seed=1111):
+    """Splits a file into 3 from given `percentage_` values"""
+    random.seed(seed)
+    folder = file.split('.')[0]
+    with open(file, 'r', encoding='utf-8') as fin, \
+         open(os.path.join(folder, 'train.txt'), 'w') as foutTrain, \
+         open(os.path.join(folder, 'valid.txt'), 'w') as foutValid, \
+         open(os.path.join(folder, 'test.txt'), 'w') as foutTest:
+
+        n_lines = sum(1 for line in fin)
+        fin.seek(0)
+        n_train = int(n_lines * percent_train)
+        n_valid = int(n_lines * percent_valid)
+        n_test = n_lines - n_train - n_valid
+
+        i = 0
+        j = 0
+        for line in fin:
+            r = random.random() if isShuffle else 0
+            if (i < n_train and r < percent_train):
+                foutTrain.write(line)
+                i += 1
+            elif j < n_valid:
+                foutValid.write(line)
+                j += 1
+            else:
+                foutTest.write(line)
