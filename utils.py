@@ -313,7 +313,7 @@ def split_file(file, percent_train=0.64, percent_valid=0.16, isShuffle=True, see
     with open(file, 'r', encoding='utf-8') as fin, \
          open(os.path.join(folder, 'train.txt'), 'w') as foutTrain, \
          open(os.path.join(folder, 'valid.txt'), 'w') as foutValid, \
-         open(os.path.join(folder, 'test.txt'), 'w') as foutTest
+         open(os.path.join(folder, 'test.txt'), 'w') as foutTest:
 
         n_lines = sum(1 for line in fin)
         fin.seek(0)

@@ -4,6 +4,8 @@
 ##################################################################
 
 import argparse
+import csv
+import os
 
 import torch
 from torch.autograd import Variable
@@ -14,11 +16,11 @@ from utils import norm_weights
 parser = argparse.ArgumentParser(description='PyTorch Language Model')
 
 #Parameters
-parser.add_argument('--data', type=str, default='./baum_wiz',
+parser.add_argument('--data', type=str, default='baum_wiz_clean',
                     help='location of the data corpus')
-parser.add_argument('--checkpoint', type=str, default='./model.pt',
+parser.add_argument('--checkpoint', type=str, default='model.pt',
                     help='model checkpoint to use')
-parser.add_argument('--outf', type=str, default='unlikely_words.txt',
+parser.add_argument('--outf', type=str, default='unlikely_words.csv',
                     help='output file for unlikely words report')
 parser.add_argument('--diff', type=float, default=0.1,
                     help='threshold for determining unlikeliness')
@@ -67,8 +69,8 @@ if args.text == 'valid':
 if args.text == 'test':
     corpus_eval = corpus.test
     
-# with open(args.outf, 'w') as outf:
 with torch.no_grad(): #Do not track history
+    hits = 0
     for i, word in enumerate(corpus_eval[:-1]):
         # Compare generated word's probability to true word's probability
         input = word.view(1,1)
@@ -85,12 +87,28 @@ with torch.no_grad(): #Do not track history
         #Report those words which the model predicts to have a probability
         #of `diff` less than the generated word
         if gen_prob - true_prob > args.diff and gen_word not in ignored:
-            print('True word is {}'.format(true_word))
-            print('Generated word is {}'.format(gen_word))
+            hits += 1
             if (true_word, gen_word) not in unlikely_dict:
                 unlikely_dict[(true_word, gen_word)] = 1
             else:
                 unlikely_dict[(true_word, gen_word)] += 1
-                
-print(unlikely_dict)
-#Stats on unlikely words
+
+print('Detected {} discrepancies with given parameters'.format(hits))
+
+pathout = os.path.join(args.data, args.outf)
+period = args.outf.find('.')
+suffix = 0
+while os.path.exists(pathout):
+    new_outf = ''.join([args.outf[:period], str(suffix), args.outf[period:]])
+    pathout = os.path.join(args.data, new_outf)
+    suffix += 1
+    change_fout = True
+
+with open(pathout, 'w') as fout:
+    wrt = csv.writer(fout, delimiter=',')
+    wrt.writerow(['diff: {}'.format(args.diff), 'ignore: {}'.format(args.ignore), 'text: {}'.format(args.text)])
+    wrt.writerow(['actual', 'generated', 'freq'])
+    for key in unlikely_dict:
+        wrt.writerow([key[0], key[1], unlikely_dict[key]])
+
+print('Wrote discrepancy data to {}'.format(pathout))
