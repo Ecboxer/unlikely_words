@@ -4,6 +4,7 @@
 #######################################################
 
 import argparse
+import os
 
 import torch
 from torch.autograd import Variable
@@ -13,7 +14,7 @@ import textData
 parser = argparse.ArgumentParser(description='PyTorch Language Model')
 
 #Parameters
-parser.add_argument('--data', type=str, default='./baum_wiz',
+parser.add_argument('--data', type=str, default='baum_wiz_clean',
                     help='location of the data corpus')
 parser.add_argument('--checkpoint', type=str, default='./model.pt',
                     help='model checkpoint to use')
@@ -51,7 +52,7 @@ ntokens = len(corpus.dictionary)
 hidden = model.init_hidden(1)
 input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
 
-with open(args.outf, 'w') as outf:
+with open(os.path.join(args.data, args.outf), 'w') as outf:
     with torch.no_grad(): #Do not track history
         for i in range(args.words):
             output, hidden = model(input, hidden)

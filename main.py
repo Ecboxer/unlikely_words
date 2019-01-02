@@ -10,7 +10,7 @@ import textData
 import model
 
 parser = argparse.ArgumentParser(description='PyTorch RNN/LSTM Language Model')
-parser.add_argument('--data', type=str, default='./baum_wiz',
+parser.add_argument('--data', type=str, default='baum_wiz_clean',
                     help='location of the data corpus')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (GRU, LSTM, RNN_RELU, RNN_TANH)')
