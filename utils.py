@@ -9,6 +9,7 @@ import io
 import array
 import random
 import os
+import torch
 from datetime import datetime
 from gru_theano import GRUTheano
 
@@ -16,6 +17,28 @@ SENTENCE_START_TOKEN = "SENTENCE_START"
 SENTENCE_END_TOKEN = "SENTENCE_END"
 UNKNOWN_TOKEN = "UNKNOWN_TOKEN"
 
+def write_Gutenberg(file, suffix='_clean'):
+    """Write clean txt file from one with Gutenberg formatting"""
+    period = file.find('.')
+    new_file = ''.join([file[:period], suffix, file[period:]])
+    with open(file, 'r', encoding='utf-8') as fin, \
+         open(new_file, 'w') as fout:
+        state = 0
+        n_div = sum(1 for line in fin if line[:3] == '***')
+        if n_div > 0: #Condition for Gutenberg formatting
+            fin.seek(0)
+            ast_count = 0
+            for line in fin:
+                if ast_count == 0: #Gutenberg preamble
+                    if line[:3] == '***':
+                        ast_count += 1
+                elif ast_count == 1: #Text
+                    if line[:3] == '***': #Gutenberg post
+                        ast_count += 1
+                    else:
+                        fout.write(line)
+            print('Read {}\nWrote text to {}'.format(file, new_file))
+        
 def load_Gutenberg(paths):
     """Load specified file with formatting from Gutenberg"""
     text = []
@@ -290,23 +313,34 @@ def split_file(file, percent_train=0.64, percent_valid=0.16, isShuffle=True, see
     with open(file, 'r', encoding='utf-8') as fin, \
          open(os.path.join(folder, 'train.txt'), 'w') as foutTrain, \
          open(os.path.join(folder, 'valid.txt'), 'w') as foutValid, \
-         open(os.path.join(folder, 'test.txt'), 'w') as foutTest:
+         open(os.path.join(folder, 'test.txt'), 'w') as foutTest
 
         n_lines = sum(1 for line in fin)
         fin.seek(0)
         n_train = int(n_lines * percent_train)
         n_valid = int(n_lines * percent_valid)
         n_test = n_lines - n_train - n_valid
-
+        
         i = 0
         j = 0
+        k = 0
         for line in fin:
-            r = random.random() if isShuffle else 0
-            if (i < n_train and r < percent_train):
-                foutTrain.write(line)
-                i += 1
-            elif j < n_valid:
-                foutValid.write(line)
-                j += 1
-            else:
-                foutTest.write(line)
+            while True:
+                r = random.random() if isShuffle else 0
+                if (i < n_train and r < percent_train):
+                    foutTrain.write(line)
+                    i += 1
+                    break
+                elif (j < n_valid and r < percent_train + percent_valid):
+                    foutValid.write(line)
+                    j += 1
+                    break
+                else:
+                    foutTest.write(line)
+                    k += 1
+                    break
+    print('Wrote training data to {}\nWrote validation data to {}\nWrote test data to {}'.format('/'.join([folder, 'train.txt']), '/'.join([folder, 'valid.txt']), '/'.join([folder, 'test.txt'])))
+
+def norm_weights(weights):
+    """Take a tensor of weights and normalize so that it sums to 1"""
+    return weights / weights.sum()
