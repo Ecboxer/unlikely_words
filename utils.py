@@ -13,14 +13,15 @@ import torch
 from datetime import datetime
 from gru_theano import GRUTheano
 
-SENTENCE_START_TOKEN = "SENTENCE_START"
-SENTENCE_END_TOKEN = "SENTENCE_END"
-UNKNOWN_TOKEN = "UNKNOWN_TOKEN"
+SENTENCE_START_TOKEN = "SOS"
+SENTENCE_END_TOKEN = "EOS"
+UNKNOWN_TOKEN = "UT"
 
 def write_Gutenberg(file, suffix='_clean'):
     """Write clean txt file from one with Gutenberg formatting"""
     period = file.find('.')
     new_file = ''.join([file[:period], suffix, file[period:]])
+
     with open(file, 'r', encoding='utf-8') as fin, \
          open(new_file, 'w') as fout:
         state = 0
@@ -108,6 +109,7 @@ def preprocessing(corpus, sentence_start_token=SENTENCE_START_TOKEN, sentence_en
 
 def construct_idxs(freqdist, vocabulary_size, unknown_token=UNKNOWN_TOKEN):
     """Get the vocabulary_size^{th} most common words and build vocabulary, idx2word and word2idx"""
+
     vocab = freqdist.most_common(vocabulary_size-1)
     idx2word = [x[0] for x in vocab]
     idx2word.append(unknown_token)
@@ -306,7 +308,7 @@ def unlikely_words(model, index_to_word, word_to_index, X, delta_min=.5, sentenc
                 print('Actual word: %s' % index_to_word[X[i][ind_exc[i]]])
     return ind_exc
 
-def split_file(file, percent_train=0.64, percent_valid=0.16, isShuffle=True, seed=1111):
+def split_file(file, percent_train=0.64, percent_valid=0.16, isShuffle=True, seed=1111, sentence_end_token=SENTENCE_END_TOKEN, lowercase=False):
     """Splits a file into 3 from given `percentage_` values"""
     random.seed(seed)
     folder = file.split('.')[0]
@@ -315,28 +317,40 @@ def split_file(file, percent_train=0.64, percent_valid=0.16, isShuffle=True, see
          open(os.path.join(folder, 'valid.txt'), 'w') as foutValid, \
          open(os.path.join(folder, 'test.txt'), 'w') as foutTest:
 
-        n_lines = sum(1 for line in fin)
-        fin.seek(0)
+        #Change division from lines to sentences
+        corpus = fin.read()
+        corpus = corpus.replace('\n', ' ')
+        corpus = corpus.replace('\r', '')
+        corpus = corpus.replace('\\', '')
+
+        if lowercase:
+            sentences = nltk.sent_tokenize(corpus.lower())
+        else:
+            sentences = nltk.sent_tokenize(corpus)
+        sentences = ['{} {} '.format(x, sentence_end_token) for x in sentences]
+        n_lines = len(sentences)
+        print('Parsed {} sentences'.format(n_lines))
+
         n_train = int(n_lines * percent_train)
         n_valid = int(n_lines * percent_valid)
         n_test = n_lines - n_train - n_valid
-        
+
         i = 0
         j = 0
         k = 0
-        for line in fin:
+        for sentence in sentences:
             while True:
                 r = random.random() if isShuffle else 0
                 if (i < n_train and r < percent_train):
-                    foutTrain.write(line)
+                    foutTrain.write(sentence)
                     i += 1
                     break
                 elif (j < n_valid and r < percent_train + percent_valid):
-                    foutValid.write(line)
+                    foutValid.write(sentence)
                     j += 1
                     break
                 else:
-                    foutTest.write(line)
+                    foutTest.write(sentence)
                     k += 1
                     break
     print('Wrote training data to {}\nWrote validation data to {}\nWrote test data to {}'.format('/'.join([folder, 'train.txt']), '/'.join([folder, 'valid.txt']), '/'.join([folder, 'test.txt'])))

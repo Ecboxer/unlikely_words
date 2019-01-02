@@ -26,6 +26,8 @@ parser.add_argument('--percent_valid', type=float, default=.16,
                     help='share of the text to use for validation')
 parser.add_argument('--suffix', type=str, default='_clean',
                     help='suffix for clean txt file')
+parser.add_argument('--lower', choices=['y', 'n'], default='n',
+                    help='change all words to lowercase')
 args = parser.parse_args()
 
 period = args.data.find('.')
@@ -46,5 +48,9 @@ else:
 #Create directory for output
 os.mkdir(file_name.split('.')[0])
 
+if args.lower == 'y':
+    lc = True
+else:
+    lc = False
 Shuffle = True if args.shuffle == 'y' else False
-split_file(file_name, args.percent_train, args.percent_valid, isShuffle=Shuffle, seed=args.seed)
+split_file(file_name, args.percent_train, args.percent_valid, isShuffle=Shuffle, seed=args.seed, lowercase=lc)

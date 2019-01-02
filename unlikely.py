@@ -24,7 +24,7 @@ parser.add_argument('--outf', type=str, default='unlikely_words.csv',
                     help='output file for unlikely words report')
 parser.add_argument('--diff', type=float, default=0.1,
                     help='threshold for determining unlikeliness')
-parser.add_argument('--ignore', type=str, default='<eos>',
+parser.add_argument('--ignore', type=str, default='EOS',
                     help='generated words to be ignored')
 parser.add_argument('--text', type=str, default='test',
                     help='text used to assess model (train, valid, test)')
@@ -34,7 +34,7 @@ parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
 parser.add_argument('--temperature', type=float, default=1.0,
                     help='temperature (diversity increases with arg value)')
-parser.add_argument('--log-interval', type=int, default=100,
+#parser.add_argument('--log-interval', type=int, default=100,
                     help='reporting interval')
 args = parser.parse_args()
 

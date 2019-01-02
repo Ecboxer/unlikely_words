@@ -209,3 +209,5 @@ print('=' * 89)
 if len(args.onnx_export) > 0:
     #Export model in ONNX format
     export_onnx(args.onnx_export, batch_size=1, seq_len=args.bptt)
+
+#TODO fix eos to be inserted after each sentence!
