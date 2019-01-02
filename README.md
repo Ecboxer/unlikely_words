@@ -2,3 +2,5 @@
 
 #### TODO
 Stats on unlikely word output
+Plots too
+Instructions on how to run
