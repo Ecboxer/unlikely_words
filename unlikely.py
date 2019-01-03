@@ -6,6 +6,7 @@
 import argparse
 import csv
 import os
+import pandas as pd
 
 import torch
 from torch.autograd import Variable
@@ -34,8 +35,8 @@ parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
 parser.add_argument('--temperature', type=float, default=1.0,
                     help='temperature (diversity increases with arg value)')
-#parser.add_argument('--log-interval', type=int, default=100,
-                    help='reporting interval')
+"""parser.add_argument('--log-interval', type=int, default=100,
+                    help='reporting interval')"""
 args = parser.parse_args()
 
 #Set random seed for reproducibility
@@ -112,3 +113,13 @@ with open(pathout, 'w') as fout:
         wrt.writerow([key[0], key[1], unlikely_dict[key]])
 
 print('Wrote discrepancy data to {}'.format(pathout))
+
+#Output summary data
+df = pd.read_csv(pathout, skiprows=1)
+print('--diff {} --ignore {} --text {}'.format(args.diff, args.ignore, args.text))
+print('Found {} unique combinations of generated and actual words.'.format(df.shape[0]))
+print('Group by generated word:')
+print(df.groupby('generated').sum()[['freq']].sort_values('freq', ascending=False)[:20])
+print('Group by actual word:')
+print(df.groupby('actual').sum()[['freq']].sort_values('freq', ascending=False)[:20])
+print('Output limited to the twenty most frequent words.')
