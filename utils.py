@@ -17,28 +17,28 @@ SENTENCE_START_TOKEN = "SOS"
 SENTENCE_END_TOKEN = "EOS"
 UNKNOWN_TOKEN = "UT"
 
-def write_Gutenberg(file, suffix='_clean'):
-    """Write clean txt file from one with Gutenberg formatting"""
-    period = file.find('.')
-    new_file = ''.join([file[:period], suffix, file[period:]])
-
-    with open(file, 'r', encoding='utf-8') as fin, \
-         open(new_file, 'w') as fout:
-        state = 0
-        n_div = sum(1 for line in fin if line[:3] == '***')
-        if n_div > 0: #Condition for Gutenberg formatting
-            fin.seek(0)
-            ast_count = 0
-            for line in fin:
-                if ast_count == 0: #Gutenberg preamble
-                    if line[:3] == '***':
-                        ast_count += 1
-                elif ast_count == 1: #Text
-                    if line[:3] == '***': #Gutenberg post
-                        ast_count += 1
-                    else:
-                        fout.write(line)
-            print('Read {}\nWrote text to {}'.format(file, new_file))
+def write_Gutenberg(files, new_file):
+    """Write clean txt file from file(s) with Gutenberg formatting"""
+    for f in files:
+        with open(f, 'r', encoding='utf-8') as fin, \
+              open(new_file, 'a') as fout:
+            state = 0
+            n_div = sum(1 for line in fin if line[:3] == '***')
+            if n_div > 0: #Condition for Gutenberg formatting
+                fin.seek(0)
+                ast_count = 0
+                for line in fin:
+                    if ast_count == 0: #Gutenberg preamble
+                        if line[:3] == '***':
+                            ast_count += 1
+                    elif ast_count == 1: #Text
+                        if line[:3] == '***': #Gutenberg post
+                            ast_count += 1
+                        else:
+                            fout.write(line)
+                print('Read {}\nWrote text to {}'.format(f, new_file))
+            else:
+                print('{} did not conform to expected formatting'.format(f))
         
 def load_Gutenberg(paths):
     """Load specified file with formatting from Gutenberg"""
