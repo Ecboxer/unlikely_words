@@ -23,10 +23,10 @@ parser.add_argument('--checkpoint', type=str, default='model.pt',
                     help='model checkpoint to use')
 parser.add_argument('--outf', type=str, default='unlikely_words.csv',
                     help='output file for unlikely words report')
-parser.add_argument('--diff', type=float, default=0.1,
-                    help='threshold for determining unlikeliness')
+parser.add_argument('--diff', type=float, default=0.05,
+                    help='threshold for determining unlikeliness (default 0.05)')
 parser.add_argument('--ignore', type=str, default='EOS',
-                    help='generated words to be ignored')
+                    help='generated words to be ignored (default "EOS")')
 parser.add_argument('--text', type=str, default='test',
                     help='text used to assess model (train, valid, test)')
 parser.add_argument('--seed', type=int, default=1111,
@@ -35,7 +35,7 @@ parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
 parser.add_argument('--temperature', type=float, default=1.0,
                     help='temperature (diversity increases with arg value)')
-parser.add_argument('--log-interval', type=int, default=1000,
+parser.add_argument('--log-interval', type=int, default=5000,
                     help='reporting interval')
 args = parser.parse_args()
 
@@ -96,7 +96,7 @@ with torch.no_grad(): #Do not track history
 
         #Reporting interval
         if i % args.log_interval == 0:
-            print('| Assessed {} words'.format(i))
+            print('| Share of unlikely words: {}/{}'.format(hits, i))
 
 print('Detected {} discrepancies with given parameters'.format(hits))
 

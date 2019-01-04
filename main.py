@@ -15,23 +15,23 @@ parser.add_argument('--data', type=str, default='baum_wiz_clean',
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (GRU, LSTM, RNN_RELU, RNN_TANH)')
 parser.add_argument('--emsize', type=int, default=128,
-                    help='size of word embedding')
+                    help='size of word embedding (default 128)')
 parser.add_argument('--nhid', type=int, default=256,
-                    help='number of hidden units per layer')
+                    help='number of hidden units per layer (default 256)')
 parser.add_argument('--nlayers', type=int, default=2,
-                    help='number of layers')
+                    help='number of layers (default 2)')
 parser.add_argument('--lr', type=float, default=20,
-                    help='initial learning rate')
+                    help='initial learning rate (default 20)')
 parser.add_argument('--clip', type=float, default=0.25,
-                    help='gradient clipping')
+                    help='gradient clipping (default 0.25)')
 parser.add_argument('--epochs', type=int, default=40,
-                    help='upper epoch limit')
+                    help='upper epoch limit (default 40)')
 parser.add_argument('--batch_size', type=int, default=20, metavar='N',
-                    help='batch size')
+                    help='batch size (default 20)')
 parser.add_argument('--bptt', type=int, default=35,
-                    help='sequence length')
+                    help='sequence length (default 35)')
 parser.add_argument('--dropout', type=float, default=0.2,
-                    help='dropout applied to layers (0 := no dropout)')
+                    help='dropout applied to layers (0 := no dropout) (default 0.2)')
 parser.add_argument('--tied', action='store_true',
                     help='tie the word embedding and softmax weights')
 parser.add_argument('--seed', type=int, default=1111,
@@ -41,7 +41,7 @@ parser.add_argument('--cuda', action='store_true',
 parser.add_argument('--log-interval', type=int, default=200, metavar='N',
                     help='report interval')
 parser.add_argument('--save', type=str, default='model.pt',
-                    help='path to save final model')
+                    help='path to save final model (default model.pt)')
 parser.add_argument('--onnx-export', type=str, default='',
                     help='path to export final model in onnx format')
 args = parser.parse_args()

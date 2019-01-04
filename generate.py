@@ -21,7 +21,7 @@ parser.add_argument('--checkpoint', type=str, default='./model.pt',
 parser.add_argument('--outf', type=str, default='generated.txt',
                     help='output file for generated text')
 parser.add_argument('--words', type=int, default=1000,
-                    help='number of words to generate')
+                    help='number of words to generate (default 1000)')
 parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true',
