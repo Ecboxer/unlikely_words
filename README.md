@@ -10,14 +10,14 @@ The model parameters `model.pt` were obtained by training an LSTM with two hidde
 Download the repo and install the requirements with `pip install -r requirements.txt`. Then,
 ```python
 # Generate 1000 words from the default model
-python generate.py --data dickens_oliver_dickens_two_cities_plato_republic_plato_symposium_clean/
+python generate.py \-\-data dickens_oliver_dickens_two_cities_plato_republic_plato_symposium_clean/
 ```
 To view the output from the terminal
 ```python
 less dickens_oliver_dickens_two_cities_plato_republic_plato_symposium_clean/generated.txt
 # Press q to stop viewing generated.txt
 ```
-
+To view 
 ## Acknowledgements
 PyTorch's example [Word-level language modeling RNN](https://github.com/pytorch/examples/tree/master/word_language_model) was used for the RNN architecture. Texts were downloaded from [Project Gutenberg](https://www.gutenberg.org/).  
 
