@@ -35,8 +35,8 @@ parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
 parser.add_argument('--temperature', type=float, default=1.0,
                     help='temperature (diversity increases with arg value)')
-"""parser.add_argument('--log-interval', type=int, default=100,
-                    help='reporting interval')"""
+parser.add_argument('--log-interval', type=int, default=1000,
+                    help='reporting interval')
 args = parser.parse_args()
 
 #Set random seed for reproducibility
@@ -93,6 +93,10 @@ with torch.no_grad(): #Do not track history
                 unlikely_dict[(true_word, gen_word)] = 1
             else:
                 unlikely_dict[(true_word, gen_word)] += 1
+
+        #Reporting interval
+        if i % args.log_interval == 0:
+            print('| Assessed {} words'.format(i))
 
 print('Detected {} discrepancies with given parameters'.format(hits))
 
