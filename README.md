@@ -93,5 +93,5 @@ PyTorch's example [Word-level language modeling RNN](https://github.com/pytorch/
 
 #### TODO
 Plot unlikely.py output  
-Can I identify madeup words by training on several authors and running `unlikely.py` on the work of another?
-Different identification metric: Find ground truth probabilities with a word frequency distributions
+Can I identify madeup words by training on several authors and running `unlikely.py` on the work of another?  
+Different identification metric: Find ground truth probabilities with a word frequency distribution.
