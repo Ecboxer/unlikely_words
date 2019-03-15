@@ -92,6 +92,6 @@ You can find an example of unlikely words analysis in the Jupyter notebook `unli
 PyTorch's example [Word-level language modeling RNN](https://github.com/pytorch/examples/tree/master/word_language_model) was used for the RNN architecture. Texts were downloaded from [Project Gutenberg](https://www.gutenberg.org/).  
 
 #### TODO
-Plot unlikely.py output  
+Plot unlikely.py output.  
 Can I identify madeup words by training on several authors and running `unlikely.py` on the work of another?  
-Different identification metric: Find ground truth probabilities with a word frequency distributions
+Different identification metric: Find ground truth probabilities with a word frequency distribution.
